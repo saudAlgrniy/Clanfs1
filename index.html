@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام إدارة كلان FS1 - RL Sideswipe</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+    }
+    body {
+      background: linear-gradient(45deg, #1c1c1c, #4e4e4e);
+      color: #fff;
+      font-size: 16px;
+      padding: 0 30px;
+      transition: background 0.3s ease;
+    }
+    .container {
+      position: relative;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 50px 0;
+    }
+    h1 {
+      color: #ff6347;
+      text-align: center;
+      margin-top: 50px;
+      font-size: 3rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 700;
+      animation: fadeIn 1s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .header-btn {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      width: auto;
+      padding: 10px 20px;
+      background: #ff6347;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1rem;
+      text-transform: uppercase;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    .header-btn:hover {
+      background: #ff4500;
+      transform: scale(1.05);
+    }
+    .sections-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: space-between;
+      margin-top: 40px;
+    }
+    .section {
+      background: #2a2a2a;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 255, 136, 0.3);
+      flex: 1 1 45%;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .section:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 60px rgba(0, 255, 136, 0.4);
+    }
+    h2 {
+      color: #ff6347;
+      font-size: 2rem;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 15px;
+      background: #444;
+      border: none;
+      color: #fff;
+      border-radius: 12px;
+      margin-top: 10px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+      border: 2px solid #ff6347;
+    }
+    button {
+      width: 100%;
+      padding: 15px;
+      background: #ff6347;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      transition: background 0.3s ease, transform 0.3s ease;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #ff4500;
+      transform: scale(1.05);
+    }
+    .add-member-btn {
+      width: auto;
+      padding: 8px 12px;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1rem;
+      text-transform: uppercase;
+      transition: background 0.3s ease, transform 0.3s ease;
+      margin-top: 10px;
+      margin-left: 10px;
+    }
+    .add-member-btn:hover {
+      background: #218838;
+      transform: scale(1.05);
+    }
+    .requests-list {
+      margin-top: 30px;
+      border-top: 2px solid #444;
+      padding-top: 20px;
+    }
+    .request-item {
+      background: #333;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 15px;
+      position: relative;
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+    .request-item:hover {
+      transform: translateX(10px);
+      background-color: #444;
+    }
+    .request-item.approved {
+      border-left: 5px solid #28a745;
+    }
+    .request-item.pending {
+      border-left: 5px solid #ffd700;
+    }
+    .status-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 8px 15px;
+      border-radius: 8px;
+      background: #444;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+    .approved .status-badge {
+      background: #28a745;
+      color: #fff;
+    }
+    .pending .status-badge {
+      background: #ffc107;
+      color: #000;
+    }
+    .rejected .status-badge {
+      background: #dc3545;
+      color: #fff;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.3s ease;
+    }
+    .modal-content {
+      background: #1c1c1c;
+      padding: 30px;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 600px;
+      animation: modal-in 0.3s ease-in-out;
+    }
+    .close-btn {
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      position: absolute;
+      top: 10px;
+      right: 15px;
+    }
+    @keyframes modal-in {
+      from {
+        opacity: 0;
+        transform: scale(0.7);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* تنسيق زر الرتب وقائمة الخيارات المخصصة */
+    .custom-select-container {
+      position: relative;
+      width: 100%;
+    }
+    .custom-select {
+      width: 100%;
+      padding: 1px;
+      background: #444;
+      border: none;
+      color: #fff;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .custom-select img {
+      width: 5em;
+      height: 5em;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    .custom-options {
+      position: absolute;
+      background: #444;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      border-radius: 12px;
+      margin-top: 10px;
+      z-index: 100;
+    }
+    .custom-options div {
+      padding: -10px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .custom-options div img {
+      width: 5em;
+      height: 5em;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+    .custom-options div:hover {
+      background: #ff6347;
+    }
+    .custom-select.active + .custom-options {
+      display: flex;
+    }
+
+    /* Media Queries */
+    @media (max-width: 768px) {
+      .container {
+        padding: 30px 15px;
+      }
+      h1 {
+        font-size: 2.2rem;
+      }
+      .sections-container {
+        flex-direction: column;
+      }
+      .section {
+        flex: 1 1 100%;
+      }
+      button {
+        font-size: 1rem;
+      }
+      .add-member-btn {
+        width: 100%;
+        margin-top: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+      .header-btn {
+        font-size: 0.9rem;
+        padding: 8px 15px;
+      }
+      .form-group input,
+      .form-group textarea,
+      button {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="header-btn" onclick="openModal()">عرض الأعضاء المقبولين</button>
+    <h1>🏆 نظام إدارة كلان [ FS1 ] 🏆</h1>
+    <div class="sections-container">
+      <div class="section">
+        <h2>📥 للتقديم على كلان FS1</h2>
+        <form id="joinForm">
+          <div class="form-group">
+            <input type="text" placeholder="اسم اللاعب بالكامل" id="playerName" required>
+          </div>
+          <div class="form-group">
+            <div class="custom-select-container">
+              <button type="button" id="playerRankBtn" class="custom-select">
+                <span>اختر رتبتك الحالية</span>
+                <img src="ranks/bronze.png" alt="Bronze">
+              </button>
+              <div id="rankOptions" class="custom-options">
+                <div data-value="Bronze" onclick="selectRank('Bronze', 'ranks/bronze.png')">
+                  <img src="ranks/bronze.png" alt="Bronze"> Bronze
+                </div>
+                <div data-value="Silver" onclick="selectRank('Silver', 'ranks/silver.png')">
+                  <img src="ranks/silver.png" alt="Silver"> Silver
+                </div>
+                <div data-value="Gold" onclick="selectRank('Gold', 'ranks/gold.png')">
+                  <img src="ranks/gold.png" alt="Gold"> Gold
+                </div>
+                <div data-value="Platinum" onclick="selectRank('Platinum', 'ranks/platinum.png')">
+                  <img src="ranks/platinum.png" alt="Platinum"> Platinum
+                </div>
+                <div data-value="Diamond" onclick="selectRank('Diamond', 'ranks/diamond.png')">
+                  <img src="ranks/diamond.png" alt="Diamond"> Diamond
+                </div>
+                <div data-value="Champion" onclick="selectRank('Champion', 'ranks/championl.png')">
+                  <img src="ranks/championl.png" alt="Champion"> Champion
+                </div>
+                <div data-value="Grand Champion" onclick="selectRank('Grand Champion', 'ranks/grand_champion.png')">
+                  <img src="ranks/grand_champion.png" alt="Grand Champion"> Grand Champion
+                </div>
+              </div>
+            </div>
+            <!-- حقل مخفي لتخزين قيمة الرتبة -->
+            <input type="hidden" id="playerRank" required>
+          </div>
+          <div class="form-group">
+            <textarea id="playerExperience" rows="4" placeholder="أخبرنا عن خبرتك في اللعبة..." required></textarea>
+          </div>
+          <button type="submit">🚀 تقديم طلب الانضمام</button>
+        </form>
+        <div class="requests-list">
+          <h2>📋 الطلبات المعلقة</h2>
+          <div id="joinRequests"></div>
+        </div>
+      </div>
+      <div class="section">
+        <h2>تحدي كلان FS1 ⚔ </h2>
+        <form id="challengeForm">
+          <div class="form-group">
+            <input type="text" placeholder="اسم الكلان المنافس" id="clanName" required>
+          </div>
+          <div class="form-group">
+            <select id="clanStrength" required>
+              <option value="">مستوى قوة الكلان</option>
+              <option value="ضعيف">ضعيف</option>
+              <option value="متوسط">متوسط</option>
+              <option value="قوي">قوي</option>
+              <option value="النخبة">النخبة</option>
+            </select>
+          </div>
+          <div class="member-inputs">
+            <div id="membersContainer">
+              <div class="form-group">
+                <input type="text" placeholder="اسم اللاعب 1" required>
+              </div>
+            </div>
+            <button type="button" class="add-member-btn" onclick="addMemberField()">➕ إضافة عضو</button>
+          </div>
+          <button type="submit">🔥 إرسال التحدي</button>
+        </form>
+        <div class="requests-list">
+          <h2>📜 التحديات الواردة</h2>
+          <div id="challengeRequests"></div>
+        </div>
+      </div>
+    </div>
+    <div id="membersModal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2>الأعضاء المقبولين في الكلان FS1</h2>
+        <ul id="approvedMembersList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+  <script>
+    // تكوين Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCofKkonFelr038vwWCjQIVJuJEncBoNy0",
+      authDomain: "voting-app-3d570.firebaseapp.com",
+      databaseURL: "https://voting-app-3d570-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "voting-app-3d570",
+      storageBucket: "voting-app-3d570.firebasestorage.app",
+      messagingSenderId: "430176927762",
+      appId: "1:430176927762:web:490f6c6a5f9fc2f75018cb",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // الوظيفة لاختيار الرتبة وإغلاق القائمة فوراً
+    function selectRank(rank, imgSrc) {
+      document.getElementById("playerRankBtn").innerHTML = `<span>${rank}</span><img src="${imgSrc}" alt="${rank}">`;
+      document.getElementById("playerRank").value = rank;
+      document.getElementById("rankOptions").style.display = 'none';
+    }
+
+    // إظهار/إخفاء قائمة الرتب عند الضغط
+    document.getElementById("playerRankBtn").addEventListener('click', function() {
+      const options = document.getElementById("rankOptions");
+      options.style.display = options.style.display === 'flex' ? 'none' : 'flex';
+    });
+
+    // إضافة حقول أعضاء التحدي
+    function addMemberField() {
+      const membersContainer = document.getElementById('membersContainer');
+      const memberField = document.createElement('div');
+      memberField.classList.add('form-group');
+      memberField.innerHTML = `<input type="text" placeholder="اسم اللاعب" required>`;
+      membersContainer.appendChild(memberField);
+    }
+
+    document.getElementById('joinForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const newRequest = {
+        name: document.getElementById('playerName').value,
+        rank: document.getElementById('playerRank').value,
+        experience: document.getElementById('playerExperience').value,
+        status: 'pending',
+        timestamp: Date.now()
+      };
+      db.ref('joinRequests').push(newRequest);
+      e.target.reset();
+    });
+
+    document.getElementById('challengeForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const members = [];
+      document.querySelectorAll('#membersContainer input').forEach(input => {
+        members.push(input.value);
+      });
+      const newChallenge = {
+        clanName: document.getElementById('clanName').value,
+        strength: document.getElementById('clanStrength').value,
+        members: members,
+        status: 'pending',
+        timestamp: Date.now()
+      };
+      db.ref('challengeRequests').push(newChallenge);
+      e.target.reset();
+      resetMemberFields();
+    });
+
+    // عرض طلبات الانضمام
+    db.ref('joinRequests').on('value', (snapshot) => {
+      const container = document.getElementById('joinRequests');
+      container.innerHTML = '';
+      snapshot.forEach(childSnapshot => {
+        const request = childSnapshot.val();
+        const requestHTML = `
+          <div class="request-item ${request.status}">
+            <div class="status-badge">${request.status === 'approved' ? '✅ تمت الموافقة' : '⏳ قيد الانتظار'}</div>
+            <h3>${request.name}</h3>
+            <p>📊 الرتبة: ${request.rank}</p>
+            <p>📝 الخبرة: ${request.experience}</p>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', requestHTML);
+      });
+    });
+
+    // عرض التحديات الواردة مع حالة الطلب
+    db.ref('challengeRequests').on('value', (snapshot) => {
+      const container = document.getElementById('challengeRequests');
+      container.innerHTML = '';
+      snapshot.forEach(childSnapshot => {
+        const challenge = childSnapshot.val();
+        const status = challenge.status || 'pending';
+        const statusText = status === 'approved' ? '✅ تمت الموافقة' : 
+                           status === 'rejected' ? '❌ مرفوض' : '⏳ قيد المعالجة';
+        const challengeHTML = `
+          <div class="request-item ${status}">
+            <div class="status-badge">${statusText}</div>
+            <h3>${challenge.clanName}</h3>
+            <p>⚡ القوة: ${challenge.strength}</p>
+            <p>👥 الأعضاء: ${challenge.members.join('، ')}</p>
+            <p>🕒 وقت التحدي: ${new Date(challenge.timestamp).toLocaleString()}</p>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', challengeHTML);
+      });
+    });
+
+    // نافذة منبثقة
+    function openModal() {
+      const modal = document.getElementById("membersModal");
+      modal.style.display = "flex";
+      loadApprovedMembers();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("membersModal");
+      modal.style.display = "none";
+    }
+
+    function loadApprovedMembers() {
+      const membersList = document.getElementById('approvedMembersList');
+      membersList.innerHTML = '';
+      db.ref('joinRequests').orderByChild('status').equalTo('approved').on('value', (snapshot) => {
+        snapshot.forEach(childSnapshot => {
+          const member = childSnapshot.val();
+          const memberHTML = `<li>اسم اللاعب: ${member.name} - الرتبة: ${member.rank}</li>`;
+          membersList.insertAdjacentHTML('beforeend', memberHTML);
+        });
+      });
+    }
+
+    function resetMemberFields() {
+      const membersContainer = document.getElementById('membersContainer');
+      membersContainer.innerHTML = `<div class="form-group"><input type="text" placeholder="اسم اللاعب 1" required></div>`;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم إدارة كلان FS1</title>
+  <style>
+    /* نفس التنسيقات القديمة */
+    * {
+      box-sizing: border-box;
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #00ff88;
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 20px;
+      border-bottom: 3px solid #00ff88;
+    }
+    .sections {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    .section {
+      background: #2d2d2d;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+    }
+    h2 {
+      color: #00ff88;
+      margin-bottom: 20px;
+    }
+    .requests-container {
+      margin-top: 20px;
+    }
+    .request-card {
+      background: #3a3a3a;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      position: relative;
+    }
+    .request-card h3 {
+      color: #00ff88;
+      margin-bottom: 10px;
+    }
+    .request-info {
+      margin-bottom: 8px;
+    }
+    .actions {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-weight: bold;
+    }
+    .accept-btn {
+      background: #28a745;
+      color: white;
+    }
+    .accept-btn:hover {
+      background: #218838;
+    }
+    .reject-btn {
+      background: #dc3545;
+      color: white;
+    }
+    .reject-btn:hover {
+      background: #c82333;
+    }
+    .delete-btn {
+      background: #ff6b6b;
+      color: white;
+    }
+    .delete-btn:hover {
+      background: #e63946;
+    }
+    .status-badge {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.9em;
+    }
+    .pending {
+      background: #ffc107;
+      color: black;
+    }
+    .approved {
+      background: #28a745;
+      color: white;
+    }
+    .rejected {
+      background: #dc3545;
+      color: white;
+    }
+    .no-requests {
+      text-align: center;
+      margin-top: 20px;
+      font-style: italic;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>لوحة تحكم إدارة كلان FS1 - RL Sideswipe</h1>
+    <div class="sections">
+      <!-- قسم طلبات الانضمام -->
+      <div class="section">
+        <h2>طلبات الانضمام الجديدة</h2>
+        <div class="requests-container" id="joinRequests"></div>
+      </div>
+      <!-- قسم التحديات -->
+      <div class="section">
+        <h2>طلبات التحدي الواردة</h2>
+        <div class="requests-container" id="challengeRequests"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- تضمين Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+  
+  <script>
+    // إعداد Firebase (استبدل بالبيانات الخاصة بك)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCofKkonFelr038vwWCjQIVJuJEncBoNy0",
+      authDomain: "voting-app-3d570.firebaseapp.com",
+      databaseURL: "https://voting-app-3d570-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "voting-app-3d570",
+      storageBucket: "voting-app-3d570.firebasestorage.app",
+      messagingSenderId: "430176927762",
+      appId: "1:430176927762:web:490f6c6a5f9fc2f75018cb",
+    };
+    // تهيئة Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  
+    // عرض طلبات الانضمام
+    db.ref('joinRequests').on('value', (snapshot) => {
+      const container = document.getElementById('joinRequests');
+      container.innerHTML = '';
+      snapshot.forEach(childSnapshot => {
+        const request = childSnapshot.val();
+        const status = request.status || 'pending';
+        const statusText = status === 'approved' ? 'مقبول' :
+                           status === 'rejected' ? 'مرفوض' : 'قيد الانتظار';
+        const requestHTML = `
+          <div class="request-card">
+            <div class="status-badge ${status}">${statusText}</div>
+            <h3>${request.name}</h3>
+            <div class="request-info">📊 الرتبة: ${request.rank}</div>
+            <div class="request-info">📝 الخبرة: ${request.experience}</div>
+            <div class="actions">
+              ${status === 'pending' ? `
+                <button class="btn accept-btn" onclick="handleJoinRequest('${childSnapshot.key}', 'approved')">قبول</button>
+                <button class="btn reject-btn" onclick="handleJoinRequest('${childSnapshot.key}', 'rejected')">رفض</button>
+              ` : ''}
+              <button class="btn delete-btn" onclick="deleteRequest('${childSnapshot.key}')">إزالة الطلب</button>
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', requestHTML);
+      });
+  
+      if (!container.innerHTML.trim()){
+        container.innerHTML = '<div class="no-requests">لا توجد طلبات حالياً</div>';
+      }
+    });
+  
+    // معالجة طلبات الانضمام
+    function handleJoinRequest(requestId, action) {
+      db.ref('joinRequests/' + requestId).update({
+        status: action,
+        processedAt: Date.now()
+      }).then(() => {
+        alert(`تم ${action === 'approved' ? 'قبول' : 'رفض'} طلب الانضمام بنجاح!`);
+      });
+    }
+
+    // إزالة الطلب
+    function deleteRequest(requestId) {
+      db.ref('joinRequests/' + requestId).remove()
+        .then(() => {
+          alert('تم إزالة طلب الانضمام بنجاح!');
+        })
+        .catch(error => {
+          console.error('خطأ في إزالة الطلب:', error);
+        });
+    }
+  
+    // عرض طلبات التحدي
+    db.ref('challengeRequests').on('value', (snapshot) => {
+      const container = document.getElementById('challengeRequests');
+      container.innerHTML = '';
+      snapshot.forEach(childSnapshot => {
+        const challenge = childSnapshot.val();
+        const status = challenge.status || 'pending';
+        const statusText = status === 'approved' ? 'مقبول' :
+                           status === 'rejected' ? 'مرفوض' : 'قيد المعالجة';
+        const challengeHTML = `
+          <div class="request-card">
+            <div class="status-badge ${status}">${statusText}</div>
+            <h3>${challenge.clanName}</h3>
+            <div class="request-info">⚡ القوة: ${challenge.strength}</div>
+            <div class="request-info">👥 الأعضاء: ${challenge.members.join('، ')}</div>
+            <div class="request-info">🕒 وقت الطلب: ${new Date(challenge.timestamp).toLocaleString()}</div>
+            <div class="actions">
+              ${status === 'pending' ? `
+                <button class="btn accept-btn" onclick="handleChallenge('${childSnapshot.key}', 'approved')">قبول التحدي</button>
+                <button class="btn reject-btn" onclick="handleChallenge('${childSnapshot.key}', 'rejected')">رفض التحدي</button>
+              ` : ''}
+              <button class="btn delete-btn" onclick="deleteChallenge('${childSnapshot.key}')">إزالة التحدي</button>
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', challengeHTML);
+      });
+  
+      if (!container.innerHTML.trim()){
+        container.innerHTML = '<div class="no-requests">لا توجد طلبات حالياً</div>';
+      }
+    });
+
+    // معالجة طلبات التحدي
+    function handleChallenge(challengeId, action) {
+      db.ref('challengeRequests/' + challengeId).update({
+        status: action,
+        processedAt: Date.now()
+      }).then(() => {
+        alert(`تم ${action === 'approved' ? 'قبول' : 'رفض'} التحدي بنجاح!`);
+      });
+    }
+
+    // إزالة التحدي
+    function deleteChallenge(challengeId) {
+      db.ref('challengeRequests/' + challengeId).remove()
+        .then(() => {
+          alert('تم إزالة التحدي بنجاح!');
+        })
+        .catch(error => {
+          console.error('خطأ في إزالة التحدي:', error);
+        });
+    }
+  </script>
+</body>
+</html>
